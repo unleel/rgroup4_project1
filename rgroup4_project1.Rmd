@@ -1,0 +1,14 @@
+---
+title: "Group4_project1"
+output: html_document
+---
+# CSIT 165 Group 4, Project 1
+## Authors: Kiran Jayasinghe and Hyun Lee
+### Date: `r Sys.Date()`"
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+```
+
