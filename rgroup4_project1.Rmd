@@ -1,14 +1,113 @@
 ---
-title: "Group4_project1"
+title: "Title: CSIT 165: Group4 Project1"
 output: html_document
----
-# CSIT 165 Group 4, Project 1
-## Authors: Kiran Jayasinghe and Hyun Lee
-### Date: `r Sys.Date()`"
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+## Authors: Kiran Jayasinghe and Hyun Lee
+### Date: `r Sys.Date()`
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+---
+
+### Introduction
+The World Health Organization has recently employed a new data science initiative, *CSIT-165*, that uses data science to characterize pandemic diseases.
+*CSIT-165* disseminates data driven analyses to global decision makers.
+*CSIT-165* is a conglomerate comprised of two fabricated entities: *Global Health Union (GHU)* and *Private Diagnostic Laboratories (PDL)*. 
+
+> [2019 Novel Coronavirus COVID-19 (2019-nCoV) Data Repository by John Hopkins CSSE](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series)
+
+Data for 2019 Novel Coronavirus is operated by the John Hopkins University Center for Systems Science and Engineering (JHU CSSE).
+Data includes daily time series CSV summary tables, including confirmations, recoveries, and deaths. 
+Country/region are countries/regions hat conform to World Health Organization (WHO).
+Lat and Long refer to coordinates references for the user. 
+Date fields are stored in MM/DD/YYYY format.
+
+```{r setup, include = FALSE}
+# Loading packages:
+library(knitr)
+library(kableExtra)
+library(magrittr)
+library(readr)
+library(geosphere)
+
+# Opening/loading cvs data sets:
+confirmed_url <- "https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+death_url <- "https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+recovered_url <- "https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
+
+confirmed_csv <- read.csv(confirmed_url, stringsAsFactors = FALSE)
+death_csv <- read.csv(death_url, stringsAsFactors = FALSE)
+recovered_csv <- read.csv(recovered_url, stringsAsFactors = FALSE)
+```
+
+
+### Project Objectives
+
+#### Objective 1
+> CSIT-165’s first objective is to determine where COVID-19 originated from. Predict where the origin started based on the area with the greatest number of confirmations and deaths on the first recorded day in the data set. Show this is the origin using an if statement.
+
+```{r, include=TRUE, echo=TRUE}
+
+
+
 
 
 ```
 
+#### Objective 2
+> Where is the most recent area to have a first confirmed case? To do this, you will need to use a for loop, if statement, and subsets.
+
+```{r, include=TRUE, echo=TRUE}
+
+
+
+
+
+```
+
+#### Objective 3
+> How far away are the areas from objective 2 from where the first confirmed case(s) occurred? Please provide answer(s) in terms of miles. Use the function distm from the R package geosphere to calculate the distance between two coordinates in meters (geosphere::distm). You will need to convert the value returned by distm from meters to miles (this conversion is simple and can be found online). Please use a table or printed statement to describe what Province/State and Country/Region first confirmed cases occurred as well as the distance (in miles) away from the origin. Please print the following: {recent region} is {distance in miles} away from {origin city, origin country}.
+
+```{r, include=TRUE, echo=TRUE}
+
+
+
+
+
+```
+
+#### Objective 4
+> Which area of the world currently has the lowest risk score (if more than one, display the one with the most confirmations)? Which area of the world currently has the highest risk score (if more than one, display the one with the most confirmations)? How do risk scores in these areas compare to global risk score? Why might it be helpful to calculate metrics like risk scores for different areas of the world and what would their limitations be (what assumptions does risk score make and what important variables might be left out)?
+
+```{r, include=TRUE, echo=TRUE}
+
+
+
+
+
+```
+
+#### Objective 5
+> You are asked to make two tables with the top 5 countries that have the most COVID-19 related confirmations and and deaths. Make sure to include all of the counts for the country, not just the counts for one area in the country. To do this we will need to sum all of the values for each country, create new data frames from these values, and use the package kable to convert those data frames into tables.
+
+```{r, include=TRUE, echo=TRUE}
+
+
+
+
+
+```
+
+#### github repo: [rgroup4_project1](https://github.com/unleel/rgroup4_project1)
