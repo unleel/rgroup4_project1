@@ -1,9 +1,8 @@
 ---
-title: "Title: CSIT 165: Group4 Project1"
+title: "Title: CSIT 165 Group 4 Project 1"
 output: html_document
-
-## Authors: Kiran Jayasinghe and Hyun Lee
-### Date: `r Sys.Date()`
+Author: "Kiran Jayasinghe and Hyun Lee"
+Date: "`r Sys.Date()`"
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{longtable}
@@ -41,15 +40,16 @@ library(kableExtra)
 library(magrittr)
 library(readr)
 library(geosphere)
+library(readr)
 
-# Opening/loading cvs data sets:
-confirmed_url <- "https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
-death_url <- "https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
-recovered_url <- "https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
+# Loading data sets from RAW githubusercontent; curl and wget was not available
+confirmed_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+death_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+recovered_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
 
-confirmed_csv <- read.csv(confirmed_url, stringsAsFactors = FALSE)
-death_csv <- read.csv(death_url, stringsAsFactors = FALSE)
-recovered_csv <- read.csv(recovered_url, stringsAsFactors = FALSE)
+confirmed_df <- read_csv(url(confirmed_url))
+death_df <- read_csv(url(death_url))
+recovered_df <- read_csv(url(recovered_url))
 ```
 
 
@@ -59,20 +59,60 @@ recovered_csv <- read.csv(recovered_url, stringsAsFactors = FALSE)
 > CSIT-165’s first objective is to determine where COVID-19 originated from. Predict where the origin started based on the area with the greatest number of confirmations and deaths on the first recorded day in the data set. Show this is the origin using an if statement.
 
 ```{r, include=TRUE, echo=TRUE}
+# Identifying the maximum value on the first day
+max_conf <- max(confirmed_df$'1/22/20')
+max_death <- max(death_df$`1/22/20`)
 
+# Identifying the row of the max column
+row_conf <- as.integer(rownames(confirmed_df)[confirmed_df$`1/22/20` == max_conf])
+country_conf <- confirmed_df[[row_conf,2]]
 
+row_death <- as.integer(rownames(death_df)[death_df$`1/22/20` == max_death])
+country_death <- death_df[[row_death,2]]
 
-
-
+# If condition to identify the most likely origin
+if (country_death == country_conf)
+{
+  cat("Country of COVID19 is most likely ", country_conf)
+}
 ```
 
 #### Objective 2
 > Where is the most recent area to have a first confirmed case? To do this, you will need to use a for loop, if statement, and subsets.
 
 ```{r, include=TRUE, echo=TRUE}
+# Data frame named not_last for the second to last day
+new_conf <- confirmed_df[,1:2]
+new_conf$'secondlast' <- confirmed_df[, ncol(confirmed_df)-1] # add column of second to last day
+new_conf$'last' <- confirmed_df[,ncol(confirmed_df)] # add column of last day
 
+new_conf <- subset(new_conf, new_conf[, 3] == 0) # subsetting for second to last day equal to zero confirmations
+area_new_conf <- (new_conf$`Province/State`) # areas with zero confirmations
 
+last_conf <- new_conf$last
+vector_last_conf <- last_conf[[colnames(last_conf)]] # from data frame to vector for binary operations
 
+second_conf <- new_conf$secondlast
+vector_second_conf <- second_conf[[colnames(second_conf)]] # from data frame to vector for binary operations
+
+# Difference between the last day confirmations and second to last day confirmations greater than zero to indicate most recent new confirmations
+conf_diff <- vector_last_conf - vector_second_conf
+
+for (i in conf_diff)
+{
+  if (i > 0)
+  {
+    max_conf <- max(conf_diff) # outputs max number
+    max_diff <- data.frame(area_new_conf, conf_diff) # makes DF for area identification
+    max_row <- rownames(max.diff)[max_diff$conf_diff == max_conf]
+    print("The area with the most recent set of new confirmation(s): ", max_row )
+  }
+  else
+  {
+    print("There are no new confirmations for the past two days.")
+    break
+  }
+}
 
 
 ```
