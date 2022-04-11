@@ -1,8 +1,8 @@
 ---
 title: "Title: CSIT 165 Group 4 Project 1"
 output: html_document
-Author: "Kiran Jayasinghe and Hyun Lee"
-Date: "`r Sys.Date()`"
+author: "Name:  Hyun Lee\nPartner: Kiran Jayasinghe"
+date: "Date: `r Sys.Date()`"
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{longtable}
@@ -41,11 +41,17 @@ library(magrittr)
 library(readr)
 library(geosphere)
 library(readr)
+library(kableExtra) # it was the only package available in RStudio, didn't want to install kable
 
 # Loading data sets from RAW githubusercontent; curl and wget was not available
 confirmed_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
 death_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
 recovered_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
+
+# Download files to local; curl and wget not available
+download.file(confirmed_url, basename(confirmed_url))
+download.file(death_url, basename(death_url))
+download.file(recovered_url, basename(recovered_url))
 
 confirmed_df <- read_csv(url(confirmed_url))
 death_df <- read_csv(url(death_url))
@@ -65,7 +71,8 @@ max_death <- max(death_df$`1/22/20`)
 
 # Identifying the row of the max column
 row_conf <- as.integer(rownames(confirmed_df)[confirmed_df$`1/22/20` == max_conf])
-country_conf <- confirmed_df[[row_conf,2]]
+country_conf <- confirmed_df[[row_conf, 2]]
+country_origin <- confirmed_df[row_conf, 1:4]
 
 row_death <- as.integer(rownames(death_df)[death_df$`1/22/20` == max_death])
 country_death <- death_df[[row_death,2]]
@@ -73,7 +80,7 @@ country_death <- death_df[[row_death,2]]
 # If condition to identify the most likely origin
 if (country_death == country_conf)
 {
-  cat("Country of COVID19 is most likely ", country_conf)
+  cat("Country of origin for COVID19 is most likely ", country_conf)
 }
 ```
 
@@ -81,73 +88,121 @@ if (country_death == country_conf)
 > Where is the most recent area to have a first confirmed case? To do this, you will need to use a for loop, if statement, and subsets.
 
 ```{r, include=TRUE, echo=TRUE}
-# Data frame named not_last for the second to last day
-new_conf <- confirmed_df[,1:2]
+# Data frame named new_conf that has location with second to last day and lasy day
+new_conf <- confirmed_df[,1:4]
 new_conf$'secondlast' <- confirmed_df[, ncol(confirmed_df)-1] # add column of second to last day
 new_conf$'last' <- confirmed_df[,ncol(confirmed_df)] # add column of last day
 
-new_conf <- subset(new_conf, new_conf[, 3] == 0) # subsetting for second to last day equal to zero confirmations
-area_new_conf <- (new_conf$`Province/State`) # areas with zero confirmations
-
+# Changing columns of data frame to vectors
 last_conf <- new_conf$last
 vector_last_conf <- last_conf[[colnames(last_conf)]] # from data frame to vector for binary operations
-
 second_conf <- new_conf$secondlast
 vector_second_conf <- second_conf[[colnames(second_conf)]] # from data frame to vector for binary operations
+new_conf <- data.frame(confirmed_df[,1:4], vector_second_conf, vector_last_conf, stringsAsFactors = FALSE)
 
-# Difference between the last day confirmations and second to last day confirmations greater than zero to indicate most recent new confirmations
-conf_diff <- vector_last_conf - vector_second_conf
+# If the difference between last day and second to last day is greater than zero, it indicates a new set of confirmed cases.
+conf_diff <- new_conf$vector_last_conf - new_conf$vector_second_conf
+max_conf <- max(conf_diff) # outputs max number
+max_diff <- data.frame(confirmed_df[,1:4], conf_diff, stringsAsFactors = FALSE) # makes DF for area identification
 
-for (i in conf_diff)
-{
-  if (i > 0)
-  {
-    max_conf <- max(conf_diff) # outputs max number
-    max_diff <- data.frame(area_new_conf, conf_diff) # makes DF for area identification
-    max_row <- rownames(max.diff)[max_diff$conf_diff == max_conf]
-    print("The area with the most recent set of new confirmation(s): ", max_row )
-  }
-  else
-  {
-    print("There are no new confirmations for the past two days.")
-    break
-  }
+# Using loop and if condition to identify the country 
+for (i in conf_diff) {
+  if (i == max_conf) {
+    max_row <- rownames(max_diff)[max_diff$conf_diff == i]
+    max_ans <- max_diff[as.numeric(max_row),]
+    
+    cat("The area with the greatest amount of new confirmations for the past two days is ", max_ans$Country.Region)
 }
-
-
+}
 ```
 
-#### Objective 3
+#### Objective 3 (completed by Kiran, edited by Hyun)
 > How far away are the areas from objective 2 from where the first confirmed case(s) occurred? Please provide answer(s) in terms of miles. Use the function distm from the R package geosphere to calculate the distance between two coordinates in meters (geosphere::distm). You will need to convert the value returned by distm from meters to miles (this conversion is simple and can be found online). Please use a table or printed statement to describe what Province/State and Country/Region first confirmed cases occurred as well as the distance (in miles) away from the origin. Please print the following: {recent region} is {distance in miles} away from {origin city, origin country}.
 
 ```{r, include=TRUE, echo=TRUE}
+library(geosphere)
+Origin = c(country_origin$Long, country_origin$Lat)
+Recent = c(max_ans$Long, max_ans$Lat)
 
+distance_between_R_and_O_in_meters = distm(Origin, Recent, fun = distGeo)
+distance_between_R_and_O = (distance_between_R_and_O_in_meters)*(0.000621371)
 
-
-
-
+cat("The most recent active country,", max_ans$Country.Region, "is" , distance_between_R_and_O, "meters away from country of origin,", country_origin$`Country/Region`)
 ```
 
-#### Objective 4
+#### Objective 4 (completed by Kiran, edited by Hyun)
 > Which area of the world currently has the lowest risk score (if more than one, display the one with the most confirmations)? Which area of the world currently has the highest risk score (if more than one, display the one with the most confirmations)? How do risk scores in these areas compare to global risk score? Why might it be helpful to calculate metrics like risk scores for different areas of the world and what would their limitations be (what assumptions does risk score make and what important variables might be left out)?
 
 ```{r, include=TRUE, echo=TRUE}
+# Excluding all cruise ships
+no_ship_confirmed_data = confirmed_df[!(confirmed_df$Lat == "NA"|confirmed_df$Lat == 0 ),]
+no_ship_deaths_data = death_df[!(death_df$Lat == "NA"|death_df$Lat == 0),]
+risk_factor_data = 100*(no_ship_deaths_data[,5:ncol(no_ship_deaths_data)]/no_ship_confirmed_data[,5:ncol(no_ship_confirmed_data)])
 
+# Identifying the region with low risk
+min_risk_factor = min(risk_factor_data[ncol(risk_factor_data)], na.rm = TRUE)
+areas_w_min_risk_factor = which(risk_factor_data[ncol(risk_factor_data)] == min(risk_factor_data[ncol(risk_factor_data)], na.rm = TRUE))
+max_conf_w_min_risk = which(no_ship_confirmed_data[ncol(no_ship_confirmed_data)] == max(no_ship_confirmed_data[areas_w_min_risk_factor,ncol(no_ship_confirmed_data)]))
+min_risk_row_data = no_ship_confirmed_data[max_conf_w_min_risk,]
+min_risk_prov = min_risk_row_data$`Province/State`
+min_risk_country = min_risk_row_data$`Country/Region`
 
+cat("Province,", min_risk_prov, "from", min_risk_country, "has the lowest risk score of", min_risk_factor, "%.")
 
+# Identifying the region with the maximum risk
+max_risk_factor = max(risk_factor_data[ncol(risk_factor_data)], na.rm = TRUE)
+areas_w_max_risk_factor = which(risk_factor_data[ncol(risk_factor_data)] == max(risk_factor_data[ncol(risk_factor_data)], na.rm = TRUE))
+max_conf_w_max_risk = which(no_ship_confirmed_data[ncol(no_ship_confirmed_data)] == max(no_ship_confirmed_data[areas_w_max_risk_factor,ncol(no_ship_confirmed_data)]))
+max_risk_row_data = no_ship_confirmed_data[max_conf_w_max_risk,]
+max_risk_prov = max_risk_row_data$`Province/State`
+max_risk_country = max_risk_row_data$`Country/Region`
 
+cat("Province,", max_risk_prov, "from", max_risk_country, "has the highest risk score with", max_risk_factor, "%.")
 
+# Identifying current global status 
+global_current_deaths = sum(death_df[ncol(death_df)])
+global_current_conf = sum(confirmed_df[ncol(confirmed_df)])
+
+global_risk_factor = 100*(global_current_deaths)/(global_current_conf)
+if(global_risk_factor > min_risk_factor) {
+  print('The global risk factor is greater than the area with the minimum risk factor.')
+}else
+  {
+  print('The global risk factor is less than the area with the minimum risk factor.')
+}
+
+if(global_risk_factor > max_risk_factor) {
+  print('The global risk factor is greater than the area with the maximum risk factor.')
+}else
+  {
+  print('The global risk factor is less than the area with the maximum risk factor.')
+}
 ```
+> Risk scores are calculated because it is beneficial to understand the ratio between deaths and confirmations: it's directly correlating the confirmed cases to death, which is not always true. 
+Out of the confirmed cases, there are recovered cases. The ratio between recovered and confirmation might add more details to the status of the area. For instance, if an area has high risk with high recovery rate, it might indicate that their preventative care needs work, but their treatment for COVID19 might be exemplary. 
 
-#### Objective 5
+#### Objective 5 (completed by Kiran)
 > You are asked to make two tables with the top 5 countries that have the most COVID-19 related confirmations and and deaths. Make sure to include all of the counts for the country, not just the counts for one area in the country. To do this we will need to sum all of the values for each country, create new data frames from these values, and use the package kable to convert those data frames into tables.
 
 ```{r, include=TRUE, echo=TRUE}
+deaths_by_country = aggregate(death_df[,5:ncol(death_df)],by = list(death_df$`Country/Region`),FUN = sum, na.rm = TRUE)
+sum_deaths_by_country = (deaths_by_country[,c(1,ncol(deaths_by_country))])
 
+sorted_sum_deaths_by_country = sum_deaths_by_country[order(sum_deaths_by_country[,2], decreasing = TRUE),]
 
+conf_by_country = aggregate(confirmed_df[,5:ncol(confirmed_df)],by = list(confirmed_df$`Country/Region`),FUN = sum, na.rm = TRUE)
+sum_conf_by_country = (conf_by_country[,c(1,ncol(conf_by_country))])
 
+sorted_sum_conf_by_country = sum_conf_by_country[order(sum_conf_by_country[,2], decreasing = TRUE),]
 
+# Make table
+kable(sorted_sum_deaths_by_country[1:5,],caption = "Top 5 Countries with Covid-Related Deaths", row.names = FALSE, col.names = c("Country","Total Deaths"))
 
+kable(sorted_sum_conf_by_country[1:5,],caption = "Top 5 Countries with Covid Cases", row.names = FALSE, col.names = c("Country","Total Cases"))
 ```
 
-#### github repo: [rgroup4_project1](https://github.com/unleel/rgroup4_project1)
+#### GitHub repo: [rgroup4_project1](https://github.com/unleel/rgroup4_project1)
+### GitHub Log
+```{bash gitlog} 
+git log --pretty=format:"%nSubject: %s%nAuthor: %aN%nDate: %aD%nBody: %b"
+```
