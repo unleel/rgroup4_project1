@@ -9,9 +9,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Name: Hyun Lee Partner: Kiran Jayasinghe" />
 
 
-<title>Title: CSIT 165: Group 4 Project 1</title>
+<title>Title: CSIT 165 Group 4 Project 1</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -361,7 +362,9 @@ pre code {
 
 
 
-<h1 class="title toc-ignore">Title: CSIT 165: Group 4 Project 1</h1>
+<h1 class="title toc-ignore">Title: CSIT 165 Group 4 Project 1</h1>
+<h4 class="author">Name: Hyun Lee Partner: Kiran Jayasinghe</h4>
+<h4 class="date">Date: 2022-04-10</h4>
 
 </div>
 
@@ -397,6 +400,24 @@ from. Predict where the origin started based on the area with the
 greatest number of confirmations and deaths on the first recorded day in
 the data set. Show this is the origin using an if statement.</p>
 </blockquote>
+<pre class="r"><code># Identifying the maximum value on the first day
+max_conf &lt;- max(confirmed_df$&#39;1/22/20&#39;)
+max_death &lt;- max(death_df$`1/22/20`)
+
+# Identifying the row of the max column
+row_conf &lt;- as.integer(rownames(confirmed_df)[confirmed_df$`1/22/20` == max_conf])
+country_conf &lt;- confirmed_df[[row_conf, 2]]
+country_origin &lt;- confirmed_df[row_conf, 1:4]
+
+row_death &lt;- as.integer(rownames(death_df)[death_df$`1/22/20` == max_death])
+country_death &lt;- death_df[[row_death,2]]
+
+# If condition to identify the most likely origin
+if (country_death == country_conf)
+{
+  cat(&quot;Country of origin for COVID19 is most likely &quot;, country_conf)
+}</code></pre>
+<pre><code>## Country of origin for COVID19 is most likely  China</code></pre>
 </div>
 <div id="objective-2" class="section level4">
 <h4>Objective 2</h4>
@@ -404,9 +425,36 @@ the data set. Show this is the origin using an if statement.</p>
 <p>Where is the most recent area to have a first confirmed case? To do
 this, you will need to use a for loop, if statement, and subsets.</p>
 </blockquote>
+<pre class="r"><code># Data frame named new_conf that has location with second to last day and lasy day
+new_conf &lt;- confirmed_df[,1:4]
+new_conf$&#39;secondlast&#39; &lt;- confirmed_df[, ncol(confirmed_df)-1] # add column of second to last day
+new_conf$&#39;last&#39; &lt;- confirmed_df[,ncol(confirmed_df)] # add column of last day
+
+# Changing columns of data frame to vectors
+last_conf &lt;- new_conf$last
+vector_last_conf &lt;- last_conf[[colnames(last_conf)]] # from data frame to vector for binary operations
+second_conf &lt;- new_conf$secondlast
+vector_second_conf &lt;- second_conf[[colnames(second_conf)]] # from data frame to vector for binary operations
+new_conf &lt;- data.frame(confirmed_df[,1:4], vector_second_conf, vector_last_conf, stringsAsFactors = FALSE)
+
+# If the difference between last day and second to last day is greater than zero, it indicates a new set of confirmed cases.
+conf_diff &lt;- new_conf$vector_last_conf - new_conf$vector_second_conf
+max_conf &lt;- max(conf_diff) # outputs max number
+max_diff &lt;- data.frame(confirmed_df[,1:4], conf_diff, stringsAsFactors = FALSE) # makes DF for area identification
+
+# Using loop and if condition to identify the country 
+for (i in conf_diff) {
+  if (i == max_conf) {
+    max_row &lt;- rownames(max_diff)[max_diff$conf_diff == i]
+    max_ans &lt;- max_diff[as.numeric(max_row),]
+    
+    cat(&quot;The area with the greatest amount of new confirmations for the past two days is &quot;, max_ans$Country.Region)
+}
+}</code></pre>
+<pre><code>## The area with the greatest amount of new confirmations for the past two days is  Korea, South</code></pre>
 </div>
-<div id="objective-3" class="section level4">
-<h4>Objective 3</h4>
+<div id="objective-3-completed-by-kiran-edited-by-hyun" class="section level4">
+<h4>Objective 3 (completed by Kiran, edited by Hyun)</h4>
 <blockquote>
 <p>How far away are the areas from objective 2 from where the first
 confirmed case(s) occurred? Please provide answer(s) in terms of miles.
@@ -419,9 +467,18 @@ first confirmed cases occurred as well as the distance (in miles) away
 from the origin. Please print the following: {recent region} is
 {distance in miles} away from {origin city, origin country}.</p>
 </blockquote>
+<pre class="r"><code>library(geosphere)
+Origin = c(country_origin$Long, country_origin$Lat)
+Recent = c(max_ans$Long, max_ans$Lat)
+
+distance_between_R_and_O_in_meters = distm(Origin, Recent, fun = distGeo)
+distance_between_R_and_O = (distance_between_R_and_O_in_meters)*(0.000621371)
+
+cat(&quot;The most recent active country,&quot;, max_ans$Country.Region, &quot;is&quot; , distance_between_R_and_O, &quot;meters away from country of origin,&quot;, country_origin$`Country/Region`)</code></pre>
+<pre><code>## The most recent active country, Korea, South is 956.3172 meters away from country of origin, China</code></pre>
 </div>
-<div id="objective-4" class="section level4">
-<h4>Objective 4</h4>
+<div id="objective-4-completed-by-kiran-edited-by-hyun" class="section level4">
+<h4>Objective 4 (completed by Kiran, edited by Hyun)</h4>
 <blockquote>
 <p>Which area of the world currently has the lowest risk score (if more
 than one, display the one with the most confirmations)? Which area of
@@ -432,9 +489,63 @@ calculate metrics like risk scores for different areas of the world and
 what would their limitations be (what assumptions does risk score make
 and what important variables might be left out)?</p>
 </blockquote>
+<pre class="r"><code># Excluding all cruise ships
+no_ship_confirmed_data = confirmed_df[!(confirmed_df$Lat == &quot;NA&quot;|confirmed_df$Lat == 0 ),]
+no_ship_deaths_data = death_df[!(death_df$Lat == &quot;NA&quot;|death_df$Lat == 0),]
+risk_factor_data = 100*(no_ship_deaths_data[,5:ncol(no_ship_deaths_data)]/no_ship_confirmed_data[,5:ncol(no_ship_confirmed_data)])
+
+# Identifying the region with low risk
+min_risk_factor = min(risk_factor_data[ncol(risk_factor_data)], na.rm = TRUE)
+areas_w_min_risk_factor = which(risk_factor_data[ncol(risk_factor_data)] == min(risk_factor_data[ncol(risk_factor_data)], na.rm = TRUE))
+max_conf_w_min_risk = which(no_ship_confirmed_data[ncol(no_ship_confirmed_data)] == max(no_ship_confirmed_data[areas_w_min_risk_factor,ncol(no_ship_confirmed_data)]))
+min_risk_row_data = no_ship_confirmed_data[max_conf_w_min_risk,]
+min_risk_prov = min_risk_row_data$`Province/State`
+min_risk_country = min_risk_row_data$`Country/Region`
+
+cat(&quot;Province,&quot;, min_risk_prov, &quot;from&quot;, min_risk_country, &quot;has the lowest risk score of&quot;, min_risk_factor, &quot;%.&quot;)</code></pre>
+<pre><code>## Province, Cook Islands from New Zealand has the lowest risk score of 0 %.</code></pre>
+<pre class="r"><code># Identifying the region with the maximum risk
+max_risk_factor = max(risk_factor_data[ncol(risk_factor_data)], na.rm = TRUE)
+areas_w_max_risk_factor = which(risk_factor_data[ncol(risk_factor_data)] == max(risk_factor_data[ncol(risk_factor_data)], na.rm = TRUE))
+max_conf_w_max_risk = which(no_ship_confirmed_data[ncol(no_ship_confirmed_data)] == max(no_ship_confirmed_data[areas_w_max_risk_factor,ncol(no_ship_confirmed_data)]))
+max_risk_row_data = no_ship_confirmed_data[max_conf_w_max_risk,]
+max_risk_prov = max_risk_row_data$`Province/State`
+max_risk_country = max_risk_row_data$`Country/Region`
+
+cat(&quot;Province,&quot;, max_risk_prov, &quot;from&quot;, max_risk_country, &quot;has the highest risk score with&quot;, max_risk_factor, &quot;%.&quot;)</code></pre>
+<pre><code>## Province, NA from Yemen has the highest risk score with 18.17489 %.</code></pre>
+<pre class="r"><code># Identifying current global status 
+global_current_deaths = sum(death_df[ncol(death_df)])
+global_current_conf = sum(confirmed_df[ncol(confirmed_df)])
+
+global_risk_factor = 100*(global_current_deaths)/(global_current_conf)
+if(global_risk_factor &gt; min_risk_factor) {
+  print(&#39;The global risk factor is greater than the area with the minimum risk factor.&#39;)
+}else
+  {
+  print(&#39;The global risk factor is less than the area with the minimum risk factor.&#39;)
+}</code></pre>
+<pre><code>## [1] &quot;The global risk factor is greater than the area with the minimum risk factor.&quot;</code></pre>
+<pre class="r"><code>if(global_risk_factor &gt; max_risk_factor) {
+  print(&#39;The global risk factor is greater than the area with the maximum risk factor.&#39;)
+}else
+  {
+  print(&#39;The global risk factor is less than the area with the maximum risk factor.&#39;)
+}</code></pre>
+<pre><code>## [1] &quot;The global risk factor is less than the area with the maximum risk factor.&quot;</code></pre>
+<blockquote>
+<p>Risk scores are calculated because it is beneficial to understand the
+ratio between deaths and confirmations: it’s directly correlating the
+confirmed cases to death, which is not always true. Out of the confirmed
+cases, there are recovered cases. The ratio between recovered and
+confirmation might add more details to the status of the area. For
+instance, if an area has high risk with high recovery rate, it might
+indicate that their preventative care needs work, but their treatment
+for COVID19 might be exemplary.</p>
+</blockquote>
 </div>
-<div id="objective-5" class="section level4">
-<h4>Objective 5</h4>
+<div id="objective-5-completed-by-kiran" class="section level4">
+<h4>Objective 5 (completed by Kiran)</h4>
 <blockquote>
 <p>You are asked to make two tables with the top 5 countries that have
 the most COVID-19 related confirmations and and deaths. Make sure to
@@ -443,10 +554,186 @@ area in the country. To do this we will need to sum all of the values
 for each country, create new data frames from these values, and use the
 package kable to convert those data frames into tables.</p>
 </blockquote>
+<pre class="r"><code>deaths_by_country = aggregate(death_df[,5:ncol(death_df)],by = list(death_df$`Country/Region`),FUN = sum, na.rm = TRUE)
+sum_deaths_by_country = (deaths_by_country[,c(1,ncol(deaths_by_country))])
+
+sorted_sum_deaths_by_country = sum_deaths_by_country[order(sum_deaths_by_country[,2], decreasing = TRUE),]
+
+conf_by_country = aggregate(confirmed_df[,5:ncol(confirmed_df)],by = list(confirmed_df$`Country/Region`),FUN = sum, na.rm = TRUE)
+sum_conf_by_country = (conf_by_country[,c(1,ncol(conf_by_country))])
+
+sorted_sum_conf_by_country = sum_conf_by_country[order(sum_conf_by_country[,2], decreasing = TRUE),]
+
+# Make table
+kable(sorted_sum_deaths_by_country[1:5,],caption = &quot;Top 5 Countries with Covid-Related Deaths&quot;, row.names = FALSE, col.names = c(&quot;Country&quot;,&quot;Total Deaths&quot;))</code></pre>
+<table>
+<caption>
+Top 5 Countries with Covid-Related Deaths
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Country
+</th>
+<th style="text-align:right;">
+Total Deaths
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+US
+</td>
+<td style="text-align:right;">
+985482
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brazil
+</td>
+<td style="text-align:right;">
+661475
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+India
+</td>
+<td style="text-align:right;">
+521685
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Russia
+</td>
+<td style="text-align:right;">
+364011
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Mexico
+</td>
+<td style="text-align:right;">
+323691
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>kable(sorted_sum_conf_by_country[1:5,],caption = &quot;Top 5 Countries with Covid Cases&quot;, row.names = FALSE, col.names = c(&quot;Country&quot;,&quot;Total Cases&quot;))</code></pre>
+<table>
+<caption>
+Top 5 Countries with Covid Cases
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Country
+</th>
+<th style="text-align:right;">
+Total Cases
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+US
+</td>
+<td style="text-align:right;">
+80399486
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+India
+</td>
+<td style="text-align:right;">
+43035271
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brazil
+</td>
+<td style="text-align:right;">
+30146769
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+France
+</td>
+<td style="text-align:right;">
+27029271
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Germany
+</td>
+<td style="text-align:right;">
+22684849
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="github-repo-rgroup4_project1" class="section level4">
-<h4>github repo: <a href="https://github.com/unleel/rgroup4_project1">rgroup4_project1</a></h4>
+<h4>GitHub repo: <a href="https://github.com/unleel/rgroup4_project1">rgroup4_project1</a></h4>
 </div>
+</div>
+<div id="github-log" class="section level3">
+<h3>GitHub Log</h3>
+<pre class="bash"><code>git log --pretty=format:&quot;%nSubject: %s%nAuthor: %aN%nDate: %aD%nBody: %b&quot;</code></pre>
+<pre><code>## 
+## Subject: complete Obj. 3,4,5
+## Author: kiranjayasinghe
+## Date: Sun, 10 Apr 2022 00:01:50 -0700
+## Body: complete Objectives 3, 4, and 5.
+## 
+## Subject: Add recovered and death covid19 time series data
+## Author: kiranjayasinghe
+## Date: Sat, 9 Apr 2022 11:32:20 -0700
+## Body: Add file for recovered Covid-19 data and death Covid-19 data as GHU member.
+## 
+## Subject: objective 2 completed
+## Author: unleel
+## Date: Sat, 9 Apr 2022 06:44:41 -0700
+## Body: 
+## 
+## Subject: added packages, library, csv, objectives&#39; definitions
+## Author: unleel
+## Date: Thu, 7 Apr 2022 16:22:21 -0700
+## Body: 
+## 
+## Subject: Merge branch &#39;main&#39; of https://github.com/unleel/rgroup4_project1
+## Author: unleel
+## Date: Thu, 7 Apr 2022 10:15:09 -0700
+## Body: 
+## 
+## Subject: title, names, setting up project 1
+## Author: unleel
+## Date: Thu, 7 Apr 2022 09:55:30 -0700
+## Body: 
+## 
+## Subject: Add files via upload
+## Author: unleel
+## Date: Thu, 7 Apr 2022 09:26:42 -0700
+## Body: 
+## 
+## Subject: Update README.md
+## Author: unleel
+## Date: Tue, 5 Apr 2022 18:49:28 -0700
+## Body: 
+## 
+## Subject: Initial commit
+## Author: unleel
+## Date: Tue, 5 Apr 2022 18:45:53 -0700
+## Body:</code></pre>
 </div>
 
 
